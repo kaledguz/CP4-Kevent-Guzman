@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { signup } from "../authservice"
+import { signup } from "../authService"
 
 export function SignupForm() {
   const {

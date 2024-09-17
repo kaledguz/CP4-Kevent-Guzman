@@ -1,11 +1,12 @@
 "use client"
-import React from "react"
+
+import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { login } from "../authservice"
+import { useAuth } from "../../context/AuthContext"
 
 export function LoginForm() {
   const {
@@ -13,7 +14,8 @@ export function LoginForm() {
     handleSubmit,
     formState: { errors },
   } = useForm()
-  const [error, setError] = React.useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const { login } = useAuth()
   const router = useRouter()
 
   const handleLogin = async (data: any) => {
@@ -21,6 +23,7 @@ export function LoginForm() {
 
     try {
       await login(data.email, data.password)
+
       router.push("/events")
     } catch (err: any) {
       setError(err.message)
