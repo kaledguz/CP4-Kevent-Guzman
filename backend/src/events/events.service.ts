@@ -23,14 +23,15 @@ export class EventsService {
   }
 
   findAll() {
-    return this.prismaService.event.findMany();
+    return this.prismaService.event.findMany({
+      include: { participants: true },
+    });
   }
 
   async findOne(id: number) {
     const eventFound = await this.prismaService.event.findUnique({
-      where: {
-        id: id,
-      },
+      where: { id },
+      include: { participants: true },
     });
     if (!eventFound) {
       throw new NotFoundException(`Event with id ${id} not found`);
@@ -48,13 +49,72 @@ export class EventsService {
 
   async remove(id: number) {
     const deleteEvent = await this.prismaService.event.delete({
-      where: {
-        id,
-      },
+      where: { id },
     });
     if (!deleteEvent) {
       throw new NotFoundException(`Event with id ${id} not found`);
     }
     return deleteEvent;
+  }
+
+  async participate(eventId: number, userId: number) {
+    const event = await this.prismaService.event.findUnique({
+      where: { id: eventId },
+      include: { participants: true },
+    });
+
+    if (!event) {
+      throw new NotFoundException(`Event with id ${eventId} not found`);
+    }
+
+    const isAlreadyParticipating = event.participants.some(
+      (participant) => participant.id === userId,
+    );
+
+    if (isAlreadyParticipating) {
+      return {
+        message: 'You are already participating in this event',
+        status: 'already_participating',
+      };
+    }
+
+    await this.prismaService.event.update({
+      where: { id: eventId },
+      data: {
+        participants: {
+          connect: { id: userId },
+        },
+      },
+    });
+
+    return { message: 'Participation successful', status: 'success' };
+  }
+
+  async cancelParticipation(eventId: number, userId: number) {
+    const event = await this.prismaService.event.findUnique({
+      where: { id: eventId },
+      include: { participants: true },
+    });
+
+    if (!event) {
+      throw new NotFoundException(`Event with id ${eventId} not found`);
+    }
+
+    const isParticipating = event.participants.some(
+      (participant) => participant.id === userId,
+    );
+
+    if (!isParticipating) {
+      throw new Error('You are not participating in this event');
+    }
+
+    return this.prismaService.event.update({
+      where: { id: eventId },
+      data: {
+        participants: {
+          disconnect: { id: userId },
+        },
+      },
+    });
   }
 }

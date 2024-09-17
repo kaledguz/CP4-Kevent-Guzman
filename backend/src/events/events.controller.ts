@@ -39,9 +39,18 @@ export class EventsController {
   update(@Param('id') id: string, @Body() updateEventDto: UpdateEventDto) {
     return this.eventsService.update(+id, updateEventDto);
   }
-
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.eventsService.remove(+id);
+  }
+
+  @Post(':id/participate')
+  participate(@Param('id') eventId: string, @GetUser() user: any) {
+    return this.eventsService.participate(+eventId, user.userId);
+  }
+
+  @Post(':id/cancel')
+  cancelParticipation(@Param('id') eventId: string, @GetUser() user: any) {
+    return this.eventsService.cancelParticipation(+eventId, user.userId);
   }
 }

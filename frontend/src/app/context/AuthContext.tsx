@@ -4,21 +4,38 @@ import { createContext, useContext, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 interface AuthContextType {
-  user: any
+  user: { userId: number; email: string } | null
   login: (email: string, password: string) => Promise<void>
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+function parseJwt(token: string) {
+  const base64Url = token.split(".")[1]
+  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/")
+  const jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split("")
+      .map(function (c) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)
+      })
+      .join("")
+  )
+  return JSON.parse(jsonPayload)
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ userId: number; email: string } | null>(
+    null
+  )
   const router = useRouter()
 
   useEffect(() => {
     const token = localStorage.getItem("token")
     if (token) {
-      setUser({ token })
+      const decodedToken = parseJwt(token)
+      setUser({ userId: decodedToken.sub, email: decodedToken.email })
     }
   }, [])
 
@@ -39,7 +56,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       localStorage.setItem("token", data.access_token)
-      setUser({ token: data.access_token })
+
+      const decodedToken = parseJwt(data.access_token)
+      setUser({ userId: decodedToken.sub, email: decodedToken.email })
+
       router.push("/events")
     } catch (err) {
       console.error("Erreur lors de la connexion :", err)

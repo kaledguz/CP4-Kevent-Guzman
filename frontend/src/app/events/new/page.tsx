@@ -1,4 +1,3 @@
-// pages/events/new/page.tsx
 import React from "react"
 
 function EventsNewPage() {
